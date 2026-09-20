@@ -29,12 +29,29 @@ Quero utilizar um recurso de "compilação" do zsh com word codes e tal.
 
 Não quero que o script troque o shell padrão e nem faça nenhuma atividade que exija sudo
 
-=====================================================================================================================  
+================================================================================================  
 
-=====================================================================================================================  
+================================================================================================  
 
 Velocidade e simplicidade é o objetivo
 
+Talvez ainda fique um tempo minusculo de cold start
+
+são três grandes coisas que me vem a mente, o instalador, o desistalador, e o carregador de plugins
+
+O instalador baixa os plugins e mais o que tem que ser baixador, cria a arvore de diretórios e arquivos,
+gera um super arquivão dos plugins, o chamado bundle que sera compilado para o plugins.zsh.zwc e será carregado
+
+Eu quero utilizar as localalizoes .cache para o arquivo .zwc, ~/.local/share/zsh/plugins para os repos e o
+~/.config/zsh/ com o zshrc e o aliases.zsh(acho que vou empacota-lo no bundle também)
+
+O desistalador deve ter uma flag que mostra o que seria apagado.
+
+O script será totalmente linear e dependerá só do git e o zsh para funcionar.
+
+O script deve alertar a falta do eza e do bat ( por conta dos aliases ).
+
+Preciso lidar com pager e o colored man 
 
 
 
@@ -49,10 +66,7 @@ Velocidade e simplicidade é o objetivo
 
 
 
-
-
-
-
+ 
 
 
 
