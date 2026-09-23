@@ -48,23 +48,49 @@ Eu quero utilizar as localalizoes .cache para o arquivo .zwc, ~/.local/share/zsh
 O desistalador deve ter uma flag que mostra o que seria apagado.
 
 O script será totalmente linear e dependerá só do git e o zsh para funcionar.
+O meu setup é dependente de outros 2 programas( eza bat )
 
 O script deve alertar a falta do eza e do bat ( por conta dos aliases ).
 
 Preciso lidar com pager e o colored man 
 
+O programa deve ser defencivo, tratando erros.
+
+Existe uma ordem certa para carregar a extensões, acho que isso vai refletir no bundle.
+
+O pure prompt precisa estar no fpath, {> ordem aqui é importante também? }
+e ele precisa do `autoload` 
+[ autoload -Uz promptinit && promptinit prompt pure ] {> O que o -Uz faz? }
+
+Os plugins serão hardcoded no código.
+
+[set -euo pipefail] ????
 
 
 
+================================================================================================  
+
+================================================================================================  
+[ set -e ]     - # O shell vai rodando e se aparece um erro ele continua sem se importar com o erro
+                  essa opção impede esse comportamento.
+
+[ command -v ] - # Util para verificar se um comando está instalado. 
+
+[ zcompile ]   - # Comando que promente acelerar o load do zsh
+                   ele tira o parsing da jogada.
+================================================================================================  
+
+================================================================================================  
+[ ctrl + r ] |> atalho para procurar comandos no histórico.
 
 
+================================================================================================  
 
-
-
-
-
-
-
+================================================================================================  
+Crie um script zsh que crie crie um setup zsh, o script deve baixar alguns plugins que estão denro de uma lista
+no script. O script deve baixar os plugins em ~/.local/share/zsh/plugins. Com os plugins baixados o script deve
+agrupar todos os arquivos.zsh dos plugins em um bundle. O script deve compilar esse bundle zsh com o zcompile e
+guardar o .zwc no ~/.cache 
 
  
 

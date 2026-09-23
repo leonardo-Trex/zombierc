@@ -10,10 +10,13 @@
 
 - Sistema de carregamento de plugins [  ]
     - Sistema de compilação de plugins ( zcompile ) [  ]
-        - Localizar o arquivo do plugins ( plugins.zsh ) [  ]
-        - Compilar o plugin ( .zwc ) [  ]
+        - Localizar o arquivo do plugins [  ]
+        - Agrupar os plugins em um super arquivo ( bundle.zsh ) [  ] 
+        - Compilar o bundle ( zcompile .zwc ) [  ]
         - Guardar o compilado na pasta correta [  ] {> Não sei qual é a pasta correta }
+                                                {> Talvez na pasta `~/.cache` }
         - Carregar esse cache compilado do plugin [  ]
+                                    {> source? }
         - Criar o symlink ( `~/.zshrc` ) apontando para o ( `~/.config/zsh/zshrc` )
 
 - Sistema de carregamento de alias
