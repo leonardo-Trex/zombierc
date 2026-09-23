@@ -38,12 +38,16 @@ done
 # 4. Diretórios base (respeitando a especificação XDG Base Directory)
 typeset xdg_data="${XDG_DATA_HOME:-$HOME/.local/share}"
 typeset xdg_cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+typeset xdg_config="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 typeset plugins_dir="${xdg_data}/zsh/plugins"
 typeset cache_dir="${xdg_cache}/zsh"
+typeset config_dir="${xdg_config}/zsh"
 typeset bundle_file="${cache_dir}/bundle.zsh"
+typeset zshrc_file="$HOME/.zshrc"
+typeset aliases_file="${config_dir}/aliases.zsh"
 
-mkdir -p "$plugins_dir" "$cache_dir"
+mkdir -p "$plugins_dir" "$cache_dir" "$config_dir"
 
 # 5. Lista de plugins na ordem ideal de carregamento
 typeset -a bundle_plugins=(
@@ -56,7 +60,7 @@ typeset -a bundle_plugins=(
 )
 
 # 6. Sincronização / Download dos repositórios via Git
-print -P "\n%F{blue}%B[ 1/3 ]%b Sincronizando plugins...%f"
+print -P "\n%F{blue}%B[ 1/4 ]%b Sincronizando plugins...%f"
 for url in "${bundle_plugins[@]}"; do
   typeset plugin_name="${url:t}"
   typeset dest="${plugins_dir}/${plugin_name}"
@@ -71,7 +75,7 @@ for url in "${bundle_plugins[@]}"; do
 done
 
 # 7. Geração do Bundle consolidado
-print -P "\n%F{blue}%B[ 2/3 ]%b Consolidando plugins no bundle...%f"
+print -P "\n%F{blue}%B[ 2/4 ]%b Consolidando plugins no bundle...%f"
 
 # 7.1 Mapeamento defensivo dos diretórios de funções e completações (fpath)
 # Garante que qualquer diretório com scripts de completion (_*), prompts ou autoload
@@ -203,7 +207,7 @@ for url in "${bundle_plugins[@]}"; do
 done
 
 # 8. Compilação para Zsh Word Code (.zwc)
-print -P "\n%F{blue}%B[ 3/3 ]%b Compilando bundle e limpando cache antigo...%f"
+print -P "\n%F{blue}%B[ 3/4 ]%b Compilando bundle e limpando cache antigo...%f"
 rm -rf "${bundle_file}.zwc" "${cache_dir}"/zcompdump*(N)
 zcompile -R "$bundle_file"
 print -P "  %F{green}✓%f Arquivo compilado gerado: %F{cyan}${bundle_file}.zwc%f"
@@ -214,7 +218,91 @@ if [[ -f "${plugins_dir}/pure/prompt_pure_setup.zwc" ]]; then
   print -P "  %F{green}✓%f Bytecode pure prompt gerado: %F{cyan}prompt_pure_setup.zwc%f"
 fi
 
-# 9. Verificação amigável de shell padrão (sem sudo / intrusão)
+# 9. Configuração do ~/.zshrc e aliases.zsh
+print -P "\n%F{blue}%B[ 4/4 ]%b Configurando ~/.zshrc e aliases...%f"
+
+# 9.1 Criação do arquivo de aliases inicial se não existir
+if [[ ! -f "$aliases_file" ]]; then
+  cat << 'EOF' > "$aliases_file"
+# =============================================================================
+# ~/.config/zsh/aliases.zsh - Atalhos e aliases do usuário
+# =============================================================================
+
+# Listagem inteligente (usando eza se disponível)
+if (( $+commands[eza] )); then
+  alias ls="eza --icons --group-directories-first"
+  alias ll="eza -la --icons --group-directories-first --git"
+  alias lt="eza --tree --level=2 --icons"
+else
+  alias ls="ls --color=auto"
+  alias ll="ls -la"
+fi
+
+# Visualizador avançado de texto (usando bat se disponível)
+if (( $+commands[bat] )); then
+  alias cat="bat --paging=never"
+fi
+
+# Navegação e comandos frequentes
+alias ..="cd .."
+alias ...="cd ../.."
+alias g="git"
+EOF
+  print -P "  %F{green}✓%f Arquivo inicial de aliases criado: %F{cyan}${aliases_file}%f"
+else
+  print -P "  %F{green}✓%f Arquivo de aliases existente preservado: %F{cyan}${aliases_file}%f"
+fi
+
+# Compilação dos aliases para .zwc
+zcompile -R "$aliases_file"
+
+# 9.2 Configuração idempotente do ~/.zshrc
+typeset bundle_line="[[ -f \"${bundle_file}\" ]] && source \"${bundle_file}\""
+typeset aliases_line="[[ -f \"${aliases_file}\" ]] && source \"${aliases_file}\""
+
+if [[ ! -f "$zshrc_file" ]]; then
+  cat << EOF > "$zshrc_file"
+# =============================================================================
+# ~/.zshrc - Configuração do Zsh gerenciada pelo Zombierc
+# =============================================================================
+
+# Cache inteligente do compinit (20h) para inicialização instantânea
+zstyle ':plugin:ez-compinit' 'use-cache' 'yes'
+
+# Carregamento do bundle consolidado e compilado (.zwc)
+${bundle_line}
+
+# Carregamento de aliases do usuário
+${aliases_line}
+EOF
+  print -P "  %F{green}✓%f Arquivo %F{cyan}~/.zshrc%f criado e configurado."
+else
+  typeset -i updated_zshrc=0
+
+  if ! grep -q "aliases\.zsh" "$zshrc_file"; then
+    {
+      print "\n# Carregamento de aliases do usuário"
+      print "$aliases_line"
+    } >> "$zshrc_file"
+    print -P "  %F{green}✓%f Linha do %F{cyan}aliases.zsh%f adicionada ao %F{yellow}~/.zshrc%f."
+    updated_zshrc=1
+  fi
+
+  if ! grep -q "bundle\.zsh" "$zshrc_file"; then
+    {
+      print "\n# Carregamento do bundle zombierc"
+      print "$bundle_line"
+    } >> "$zshrc_file"
+    print -P "  %F{green}✓%f Linha do %F{cyan}bundle.zsh%f adicionada ao %F{yellow}~/.zshrc%f."
+    updated_zshrc=1
+  fi
+
+  if (( updated_zshrc == 0 )); then
+    print -P "  %F{green}✓%f %F{cyan}~/.zshrc%f já está configurado com bundle e aliases."
+  fi
+fi
+
+# 10. Verificação amigável de shell padrão (sem sudo / intrusão)
 if [[ "${SHELL:t}" != "zsh" ]]; then
   print -P "\n%F{yellow}%B[ AVISO ]%b O Zsh não está definido como seu shell padrão (atual: %F{cyan}${SHELL:t}%f)."
   print -P "Você pode alterar o shell padrão do seu usuário com:"
@@ -222,10 +310,10 @@ if [[ "${SHELL:t}" != "zsh" ]]; then
   print -P "A mudança vai se refletir quando a sessão for reiniciada."
 fi
 
-# 10. Instruções finais
+# 11. Instruções finais
 print -P "\n%F{green}%B✨ Configuração concluída com sucesso!%b%f"
-print -P "Para carregar o bundle compilado no seu %F{yellow}~/.zshrc%f:"
-print -P "  %F{cyan}[[ -f \"${bundle_file}\" ]] && source \"${bundle_file}\"%f"
-print -P "\n%F{blue}%B[ Dica ]%b O %F{cyan}ez-compinit%f suporta cache de compinit (20h) para inicialização ultrarrápida:"
-print -P "  %F{yellow}zstyle ':plugin:ez-compinit' 'use-cache' 'yes'%f"
-print -P "Basta adicionar essa diretriz no seu %F{yellow}~/.zshrc%f antes de carregar o bundle.\n"
+print -P "Seu %F{yellow}~/.zshrc%f está pronto e configurado para carregar:"
+print -P "  • Bundle consolidado: %F{cyan}${bundle_file}%f"
+print -P "  • Aliases:            %F{cyan}${aliases_file}%f"
+print -P "\nPara aplicar as alterações na sua sessão atual:"
+print -P "  %F{green}source ~/.zshrc%f\n"
